@@ -33,7 +33,7 @@ type JellyfinPlaybackInfo struct {
 	MediaSources []JellyfinPlaybackSource
 }
 
-var jellyfinAddress, jellyfinToken, libraryId string
+var jellyfinAddress, jellyfinToken, libraryId, languageCode, collectionName string
 
 func makeRequest(method string, path string, in interface{}, out interface{}) (string, error) {
 	url := "https://" + jellyfinAddress + ":8920/" + path
@@ -69,7 +69,7 @@ func makeRequest(method string, path string, in interface{}, out interface{}) (s
 	return string(bytes), err
 }
 
-func hasPolishAudio(id string) (bool, error) {
+func hasMatchingAudio(id string) (bool, error) {
 	var res JellyfinPlaybackInfo
 	_, err := makeRequest("GET", "Items/"+id+"/PlaybackInfo", nil, &res)
 	if err != nil {
@@ -77,7 +77,7 @@ func hasPolishAudio(id string) (bool, error) {
 	}
 	for _, source := range res.MediaSources {
 		for _, stream := range source.MediaStreams {
-			if stream.Type == "Audio" && stream.Language == "pol" {
+			if stream.Type == "Audio" && stream.Language == languageCode {
 				return true, nil
 			}
 		}
@@ -89,9 +89,11 @@ func main() {
 	flag.StringVar(&jellyfinAddress, "jellyfin-address", "", "")
 	flag.StringVar(&jellyfinToken, "jellyfin-token", "", "")
 	flag.StringVar(&libraryId, "library-id", "", "")
+	flag.StringVar(&languageCode, "language-code", "", "")
+	flag.StringVar(&collectionName, "collection-name", "", "")
 	flag.Parse()
 	var col JellyfinItem
-	_, err := makeRequest("POST", "Collections?name=Lektor", nil, &col)
+	_, err := makeRequest("POST", "Collections?name="+collectionName, nil, &col)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -101,7 +103,7 @@ func main() {
 		log.Fatal(err)
 	}
 	for _, item := range res.Items {
-		pol, _ := hasPolishAudio(item.Id)
+		pol, _ := hasMatchingAudio(item.Id)
 		if pol {
 			log.Print(item.Name)
 			_, err = makeRequest("POST", "Collections/"+col.Id+"/Items?ids="+item.Id, nil, nil)
