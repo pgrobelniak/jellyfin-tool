@@ -36,7 +36,7 @@ type JellyfinPlaybackInfo struct {
 var jellyfinAddress, jellyfinToken, libraryId, languageCode, collectionName string
 
 func makeRequest(method string, path string, in interface{}, out interface{}) (string, error) {
-	url := "https://" + jellyfinAddress + ":8920/" + path
+	url := "" + jellyfinAddress + "/" + path
 	buffer := new(bytes.Buffer)
 	if in != nil {
 		if err := json.NewEncoder(buffer).Encode(in); err != nil {
